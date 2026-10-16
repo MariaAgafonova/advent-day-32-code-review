@@ -98,7 +98,7 @@ fun DayScreen(vm: DayViewModel, onSettings: () -> Unit, onReview: (LocalDate) ->
             item { OutlinedButton(onClick = { onReview(state.date) }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.review_title)) } }
         }
     }
-    if (calendar) ChooseDate(state.date, { calendar = false }) { vm.select(it); calendar = false }
+    if (calendar) ChooseDate(state.date, { calendar = false }, selectImmediately = true) { vm.select(it); calendar = false }
     if (adding) TaskEditor(null, { adding = false }) { vm.add(listOf(it), state.date); adding = false }
 }
 
