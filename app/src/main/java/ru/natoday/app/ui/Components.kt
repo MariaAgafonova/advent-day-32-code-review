@@ -29,19 +29,28 @@ fun ActionIcon(@DrawableRes image: Int, @StringRes description: Int, enabled: Bo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChooseDate(initial: LocalDate, onDismiss: () -> Unit, onSelected: (LocalDate) -> Unit) {
+fun ChooseDate(initial: LocalDate, onDismiss: () -> Unit, selectImmediately: Boolean = false, onSelected: (LocalDate) -> Unit) {
+    val initialMillis = initial.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
     val picker = rememberDatePickerState(
-        initialSelectedDateMillis = initial.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+        // Leave selection empty so opening the calendar does not trigger navigation,
+        // and tapping the day already being viewed still counts as a selection.
+        initialSelectedDateMillis = if (selectImmediately) null else initialMillis,
+        initialDisplayedMonthMillis = initialMillis,
         yearRange = 1..9999,
     )
+    if (selectImmediately) {
+        LaunchedEffect(picker.selectedDateMillis) {
+            picker.selectedDateMillis?.let { onSelected(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()) }
+        }
+    }
     DatePickerDialog(onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(enabled = picker.selectedDateMillis != null, onClick = {
+            if (!selectImmediately) TextButton(enabled = picker.selectedDateMillis != null, onClick = {
                 picker.selectedDateMillis?.let { onSelected(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()) }
             }) { Text(stringResource(R.string.save)) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
-    ) { DatePicker(state = picker) }
+    ) { DatePicker(state = picker, showModeToggle = !selectImmediately) }
 }
 
 @Composable
